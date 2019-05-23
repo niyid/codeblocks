@@ -1,4 +1,4 @@
-# softblocks
+# codeblocks
 A visual representation of software which are built by assembling software components (blocks) ideal for teaching software development to beginners and kids and is projected to eventually be the standard paradigm in software development in the near future. 
 
 As a simple instance to have a software that models the solution to the quadratic equation:  
