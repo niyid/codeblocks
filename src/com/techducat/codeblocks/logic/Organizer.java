@@ -86,6 +86,7 @@ public class Organizer extends BaseBlock {
                     dir = SortDirection.values()[sortIndex];
                 }
             } catch(NumberFormatException e) {
+                LOGGER.log(Level.WARNING, "SortDirection value is not numeric: {0}", e.getMessage());
                 dir = SortDirection.valueOf(direction.toString());
             }
         }

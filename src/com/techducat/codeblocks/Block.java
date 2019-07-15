@@ -171,4 +171,10 @@ public interface Block extends Callable<Object> {
      * 
      */
     void initInput();
+    
+    /**
+     * 
+     * @return 
+     */
+    boolean isInDisplayed();
 }

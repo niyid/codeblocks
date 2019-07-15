@@ -126,6 +126,8 @@ public class BasicGraphEditor extends JPanel {
     protected mxKeyboardHandler keyboardHandler;
     
     protected JComponent runButton;
+    
+    protected JComponent persistButton;
 
     /**
      *
@@ -149,11 +151,13 @@ public class BasicGraphEditor extends JPanel {
     /**
      *
      */
-    public BasicGraphEditor(String appTitle, mxGraphComponent component, JComponent runButton) {
+    public BasicGraphEditor(String appTitle, mxGraphComponent component, JComponent runButton, JComponent saveButton) {
         // Stores and updates the frame title
         this.appTitle = appTitle;
         
         this.runButton = runButton;
+        
+        this.persistButton = saveButton;
 
         // Stores a reference to the graph and creates the command history
         graphComponent = component;
@@ -199,8 +203,11 @@ public class BasicGraphEditor extends JPanel {
         inner.setBorder(null);
 
         
+        JSplitPane innerInner = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
+                runButton, saveButton);
+        
         JSplitPane innerOuter = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
-                runButton, inner);
+                innerInner, inner);
 
 		// Creates the outer split pane that contains the inner split pane and
         // the graph component on the right side of the window

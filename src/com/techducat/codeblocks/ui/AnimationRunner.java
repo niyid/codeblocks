@@ -14,7 +14,6 @@ import com.mxgraph.view.mxGraph;
 import com.techducat.codeblocks.logic.AnimationContext;
 import com.techducat.codeblocks.logic.BaseBlock;
 import com.techducat.codeblocks.logic.Decision;
-import com.techducat.codeblocks.logic.Looper;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
@@ -24,7 +23,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
@@ -48,33 +46,27 @@ public class AnimationRunner extends SwingWorker<Integer, List<AnimationContext>
 
     private final JButton executeButton;
 
+    private final JButton saveButton;
+
     private final mxGraph graph;
 
-    private final mxGraphComponent component;
-
-    private final CustomMxCell rootCell;
-
-    private List<Future> futures = new ArrayList<Future>();
-    
     private final int averageFontWidth;
-    
+
     private final Object[] cells;
-    
+
     private final Graphics2D g;
-    
+
     private int loopIndex;
-    
+
     private final AssemblyWorkbench.InputDialog dialog;
 
     //TODO Generate a line of execution and store in a FIFO. The FIFO will be in an item in a parent FIFO
-    public AnimationRunner(AssemblyWorkbench.CodeAnimationGlassPane glass, JButton executeButton, mxGraphComponent component, CustomMxCell rootCell, AssemblyWorkbench.InputDialog dialog) {
+    public AnimationRunner(AssemblyWorkbench.CodeAnimationGlassPane glass, JButton executeButton, JButton saveButton, mxGraphComponent component, CustomMxCell rootCell, AssemblyWorkbench.InputDialog dialog) {
         this.glass = glass;
         this.executeButton = executeButton;
-        this.component = component;
+        this.saveButton = saveButton;
         this.graph = component.getGraph();
-        this.rootCell = rootCell;
         this.dialog = dialog;
-        
 
         //TODO First display rootBlock.retained
         mxCell actualRoot = (mxCell) rootCell.getParent();
@@ -86,7 +78,6 @@ public class AnimationRunner extends SwingWorker<Integer, List<AnimationContext>
         g.translate(executeButton.getParent().getWidth() + 12, executeButton.getHeight() / 2);
 
 //        rootOuts = new ArrayList<>();
-
         int[] widths = g.getFontMetrics().getWidths();
         double totalWidth = 0.0;
         for (int i = 0; i < widths.length; i++) {
@@ -95,7 +86,7 @@ public class AnimationRunner extends SwingWorker<Integer, List<AnimationContext>
         averageFontWidth = (int) (totalWidth / (double) widths.length);
 
         LOGGER.log(Level.INFO, "BlockRunner:FontWidth: {0}", averageFontWidth);
-        
+
     }
 
     public static mxCell block2Cell(long id, Object[] cells) {
@@ -150,7 +141,7 @@ public class AnimationRunner extends SwingWorker<Integer, List<AnimationContext>
 
     @Override
     protected void process(List<List<AnimationContext>> chunks) {
-        for(List<AnimationContext> item : chunks) {
+        for (List<AnimationContext> item : chunks) {
             try {
                 Thread.sleep(3000);
             } catch (InterruptedException ex) {
@@ -169,7 +160,7 @@ public class AnimationRunner extends SwingWorker<Integer, List<AnimationContext>
                 }
 
                 Collection<Object> listing;
-                if (block instanceof Looper) {
+                if (block.isInDisplayed()) {
                     listing = in;
                 } else {
                     listing = out;
@@ -204,7 +195,7 @@ public class AnimationRunner extends SwingWorker<Integer, List<AnimationContext>
                 int longest = AnimationRunner.longestInList(listing);
                 for (Object obj : listing) {
                     dy += g.getFontMetrics().getHeight();
-                    if(out.contains(obj)) {
+                    if (out.contains(obj)) {
                         g.setColor(Color.red);
                     } else {
                         g.setColor(Color.black);
@@ -262,6 +253,7 @@ public class AnimationRunner extends SwingWorker<Integer, List<AnimationContext>
         glass.setVisible(false);
         glass.setNeedToRedispatch(true);
         executeButton.setEnabled(true);
+        saveButton.setEnabled(true);
     }
-    
+
 }

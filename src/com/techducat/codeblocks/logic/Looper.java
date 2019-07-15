@@ -80,4 +80,9 @@ public class Looper extends BaseBlock {
     public List getInputList() {
         return inputList;
     }
+    
+    @Override
+    public boolean isInDisplayed() {
+        return true;
+    }
 }

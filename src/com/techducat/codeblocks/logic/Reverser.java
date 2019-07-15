@@ -18,9 +18,6 @@ public class Reverser extends BaseBlock {
         
     private static final Logger LOGGER = Logger.getLogger(Reverser.class.getName());
 
-
-    private int loopIndex = 0;
-
     public Reverser() {
         super("Reverser");
     }
@@ -43,13 +40,5 @@ public class Reverser extends BaseBlock {
         }
                 
         return this.sendOut(reverseOutput);
-    }
-
-    public int getLoopIndex() {
-        return loopIndex;
-    }
-
-    public void setLoopIndex(int loopIndex) {
-        this.loopIndex = loopIndex;
     }
 }

@@ -1,6 +1,6 @@
 /*
  * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
+ * To change this template privateFolder, choose Tools | Templates
  * and open the template in the editor.
  */
 package com.techducat.codeblocks.ui;
@@ -31,6 +31,8 @@ import com.mxgraph.view.mxStylesheet;
 import com.techducat.codeblocks.logic.BaseBlock;
 import com.techducat.codeblocks.logic.Basket;
 import com.techducat.codeblocks.logic.Decision;
+import com.techducat.codeblocks.logic.Lexicon;
+import com.techducat.codeblocks.logic.LinearEquation;
 import com.techducat.codeblocks.logic.Looper;
 import com.techducat.codeblocks.logic.State;
 import com.techducat.codeblocks.logic.Thing;
@@ -62,10 +64,16 @@ import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -81,6 +89,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
@@ -107,11 +116,15 @@ public final class AssemblyWorkbench extends BasicGraphEditor {
 
     private static JButton executeButton;
 
+    private static JButton saveButton;
+
     private InputDialog inputDialog;
 
     private JFrame frame;
 
     private CodeAnimationGlassPane glass;
+    
+    private Properties applicationProperties;
 
     private mxGraph getGraph() {
         return getGraphComponent().getGraph();
@@ -120,53 +133,64 @@ public final class AssemblyWorkbench extends BasicGraphEditor {
     private void cleanupGraph() {
 
         mxCell root = (mxCell) graph.getModel().getRoot();
-        CustomMxCell actualRoot = (CustomMxCell) root.getChildAt(0).getChildAt(0);
+        mxCell actualRoot = (mxCell) root.getChildAt(0);
 
-        mxCell rootParent = (mxCell) actualRoot.getParent();
-        Object[] cells = graph.getChildCells(rootParent);
+        Object[] cells = graph.getChildCells(actualRoot);
 
         mxCell cell;
         for (Object c : cells) {
             cell = (mxCell) c;
             if (cell.isVertex()) {
                 if (graph.getModel().getEdgeCount(c) == 0) {
-                    rootParent.remove(cell);
+                    actualRoot.remove(cell);
                     LOGGER.log(Level.INFO, "Removing hanging vertex...{0}", cell);
                 }
             }
         }
-        
+
         Basket.resetAll();
+        LinearEquation.resetAll();
     }
 
     public void init() {
-        mxSwingConstants.SHADOW_COLOR = Color.LIGHT_GRAY;
-        mxConstants.W3C_SHADOWCOLOR = "#D3D3D3";
-
-        frame = this.createFrame(null);
+        try {
+            InputStream stream = Lexicon.class.getResourceAsStream("/com/techducat/codeblocks/resources/application.properties");
+            applicationProperties = new Properties();
+            applicationProperties.load(stream);
+            mxSwingConstants.SHADOW_COLOR = Color.LIGHT_GRAY;
+            mxConstants.W3C_SHADOWCOLOR = "#D3D3D3";
+            
+            frame = this.createFrame(null);
 //        frame.setUndecorated(true);
-        frame.setVisible(true);
-        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-
-        JPanel controlPane = new JPanel(new GridLayout(2, 1));
-        controlPane.setOpaque(false);
-        glass = new CodeAnimationGlassPane(frame.getJMenuBar(), frame.getContentPane());
-        glass.setLayout(new GridLayout(0, 1));
-        glass.setOpaque(false);
-        glass.add(new JLabel()); // padding...
-        glass.add(new JLabel());
-        glass.add(controlPane);
-        glass.add(new JLabel());
-        glass.add(new JLabel());
-        frame.setGlassPane(glass);
-
-        executeButton.addActionListener((ActionEvent e) -> {
-            try {
-                launchInputDialog();
-            } catch (IOException ex) {
-                Logger.getLogger(AssemblyWorkbench.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        });
+            frame.setVisible(true);
+            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            
+            JPanel controlPane = new JPanel(new GridLayout(2, 1));
+            controlPane.setOpaque(false);
+            glass = new CodeAnimationGlassPane(frame.getJMenuBar(), frame.getContentPane());
+            glass.setLayout(new GridLayout(0, 1));
+            glass.setOpaque(false);
+            glass.add(new JLabel()); // padding...
+            glass.add(new JLabel());
+            glass.add(controlPane);
+            glass.add(new JLabel());
+            glass.add(new JLabel());
+            frame.setGlassPane(glass);
+            
+            executeButton.addActionListener((ActionEvent e) -> {
+                try {
+                    launchInputDialog();
+                } catch (IOException ex) {
+                    Logger.getLogger(AssemblyWorkbench.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            });
+            
+            saveButton.addActionListener((ActionEvent e) -> {
+                showSaveDialog();
+            });
+        } catch (IOException ex) {
+            Logger.getLogger(AssemblyWorkbench.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
     }
 
@@ -335,17 +359,76 @@ public final class AssemblyWorkbench extends BasicGraphEditor {
             button.setOpaque(false);
             button.setContentAreaFilled(false);
             button.setEnabled(false);
-            AssemblyWorkbench workbench = new AssemblyWorkbench("CodeBlocks Bench", graphComponent, button);
+
+            JButton button2 = new JButton(new ImageIcon(
+                    AssemblyWorkbench.class.getResource("/com/techducat/codeblocks/icons/save.png")));
+            button2.setOpaque(false);
+            button2.setContentAreaFilled(false);
+            button2.setEnabled(false);
+
+            AssemblyWorkbench workbench = new AssemblyWorkbench("CodeBlocks Bench", graphComponent, button, button2);
             SplashScreen sc = new SplashScreen(workbench);
             sc.setVisible(true);
         });
 
     }
+    
+    private void showSaveDialog() {
+        String customBlockName = JOptionPane.showInputDialog(frame, "What should we call your work?");
+        if(customBlockName != null) {
+            if(customBlockName.matches("[0-9a-zA-Z]+")) {
+                save(customBlockName);
+            } else {
+                JOptionPane.showMessageDialog(this, "The chosen file name should not contain any special characters like *,?, %. Only letters (a to z) and numbers (0 to 9) allowed: " + customBlockName, "Wrong Format", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 
-    public AssemblyWorkbench(String appTitle, mxGraphComponent component, JComponent runButton) {
-        super(appTitle, component, runButton);
+    public final void save(String customBlockName) {
+        mxCell root = (mxCell) graph.getModel().getRoot();
+        mxCell actualRoot = (mxCell) root.getChildAt(0);
+        File privateFolder = new File(applicationProperties.getProperty("library.folder"));
+        if(!privateFolder.exists()) {
+            privateFolder.mkdirs();
+        }
+        String fileName =  privateFolder.getAbsolutePath() + customBlockName + "_" + System.currentTimeMillis() + ".csv";
+
+        Object[] cells = graph.getChildCells(actualRoot);
+        try (PrintWriter writer = new PrintWriter(fileName, "UTF-8")) {
+            mxCell cell;
+            mxCell edge;
+            mxCellState edgeState;
+            mxGeometry vertexGeom;
+            CustomMxCell vert;
+            List<mxPoint> points;
+            for (Object c : cells) {
+                cell = (mxCell) c;
+                if (cell.isVertex()) {
+                    vert = (CustomMxCell) cell;
+                    vertexGeom = graph.getModel().getGeometry(cell);
+                    writer.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", "\"" + vert.getName() + "\"", cell.isVertex(), cell.getId(), "\"" + cell.getValue() + "\"", "\"" + cell.getStyle() + "\"", "\"" + vertexGeom + "\"", "", "", "");
+                    Object[] currentEdges = graph.getOutgoingEdges(cell);
+                    for (Object e : currentEdges) {
+                        edge = (mxCell) e;
+                        edgeState = graph.getView().getState(e);
+                        points = edgeState.getAbsolutePoints();
+                        writer.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", "", edge.isVertex(), edge.getId(), "\"" + edge.getValue() + "\"", "\"" + edge.getStyle() + "\"", "", edge.getSource().getId(), edge.getTarget().getId(), "\"" + points + "\"");
+                    }
+                }
+                //TODO Add the saved custom Block to the private library
+            }
+            saveButton.setEnabled(false);
+        } catch (FileNotFoundException | UnsupportedEncodingException ex) {
+            Logger.getLogger(AssemblyWorkbench.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        JOptionPane.showMessageDialog(this, "Workspace saved to " + fileName, "Save Done", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public AssemblyWorkbench(String appTitle, mxGraphComponent component, JButton runButton, JButton saveButton) {
+        super(appTitle, component, runButton, saveButton);
         graph = graphComponent.getGraph();
         AssemblyWorkbench.executeButton = (JButton) runButton;
+        AssemblyWorkbench.saveButton = (JButton) saveButton;
 
         // Creates the blocks palette
         //TODO Remember to internationalize/localize
@@ -353,7 +436,8 @@ public final class AssemblyWorkbench extends BasicGraphEditor {
         CustomEditorPalette textFunctionPalette = insertPalette(mxResources.get("text"));
         CustomEditorPalette mathFunctionPalette = insertPalette(mxResources.get("math"));
         CustomEditorPalette animationFunctionPalette = insertPalette(mxResources.get("animation"));
-        CustomEditorPalette libraryFunctionPalette = insertPalette(mxResources.get("library"));
+        CustomEditorPalette privateFunctionPalette = insertPalette(mxResources.get("library"));
+        CustomEditorPalette sharedFunctionPalette = insertPalette(mxResources.get("shared"));
 
         mxEventSource.mxIEventListener eventListener = (Object sender, mxEventObject evt) -> {
             Object tmp = evt.getProperty("transferable");
@@ -505,6 +589,47 @@ public final class AssemblyWorkbench extends BasicGraphEditor {
                         "image;image=/com/techducat/codeblocks/icons/block_lexicon2.png",
                         200, 200, "Lexicon");
 
+        mathFunctionPalette
+                .addTemplate(
+                        "Fibonacci",
+                        new ImageIcon(
+                                AssemblyWorkbench.class
+                                .getResource("/com/techducat/codeblocks/icons/spiral.png")),
+                        "image;image=/com/techducat/codeblocks/icons/block_spiral2.png",
+                        200, 200, "Fibonacci");
+        mathFunctionPalette
+                .addTemplate(
+                        "Sequence",
+                        new ImageIcon(
+                                AssemblyWorkbench.class
+                                .getResource("/com/techducat/codeblocks/icons/sequence.png")),
+                        "image;image=/com/techducat/codeblocks/icons/block_sequence2.png",
+                        200, 200, "n");
+        mathFunctionPalette
+                .addTemplate(
+                        "Series",
+                        new ImageIcon(
+                                AssemblyWorkbench.class
+                                .getResource("/com/techducat/codeblocks/icons/series.png")),
+                        "image;image=/com/techducat/codeblocks/icons/block_series2.png",
+                        200, 200, "n");
+        mathFunctionPalette
+                .addTemplate(
+                        "Linear Equation",
+                        new ImageIcon(
+                                AssemblyWorkbench.class
+                                .getResource("/com/techducat/codeblocks/icons/linear.png")),
+                        "image;image=/com/techducat/codeblocks/icons/block_linear2.png",
+                        200, 200, "Linear Equation");
+        mathFunctionPalette
+                .addTemplate(
+                        "Quadratic Equation",
+                        new ImageIcon(
+                                AssemblyWorkbench.class
+                                .getResource("/com/techducat/codeblocks/icons/quadratic.png")),
+                        "image;image=/com/techducat/codeblocks/icons/block_quadratic2.png",
+                        200, 200, "Quadratic Equation");
+
         setOpaque(false);
     }
 
@@ -533,7 +658,7 @@ public final class AssemblyWorkbench extends BasicGraphEditor {
 
             getConnectionHandler().setCreateTarget(true);
 
-            // Loads the defalt stylesheet from an external file
+            // Loads the defalt stylesheet from an external privateFolder
             mxCodec codec = new mxCodec();
             Document doc = mxUtils.loadDocument(GraphEditor.class.getResource(
                     "/com/techducat/codeblocks/resources/default-style.xml")
@@ -1061,19 +1186,32 @@ public final class AssemblyWorkbench extends BasicGraphEditor {
             this.anythingText.setHorizontalAlignment(SwingConstants.CENTER);
 
             ImageIcon anythingIcon = new ImageIcon(AssemblyWorkbench.class.getResource("/com/techducat/codeblocks/thing/icons/anything.png"));
+            ImageIcon matrixIcon = new ImageIcon(AssemblyWorkbench.class.getResource("/com/techducat/codeblocks/thing/icons/matrix.png"));
             ImageIcon addIcon = new ImageIcon(AssemblyWorkbench.class.getResource("/com/techducat/codeblocks/icons/add.png"));
             this.anythingButton = new JButton(addIcon);
             this.anythingButton.addActionListener((ActionEvent e) -> {
                 Thing t = new Thing();
                 t.setName(anythingText.getText());
+                //TODO Extend regex to match numbers with decimal points
+                if (anythingText.getText().matches("[-+]?\\d+\\s*,[-+]?\\d+\\s*,[-+]?\\d+\\s*")) {
+                    Thing.setCategory(t, "Math");
+                    String[] matrixElements = anythingText.getText().split(",");
+                    double[] elements = new double[matrixElements.length];
+                    for (int i = 0; i < matrixElements.length; i++) {
+                        elements[i] = Double.parseDouble(matrixElements[i].trim());
+                    }
+                    t.setValue(elements);
+                    t.setIcon(matrixIcon);
+                } else {
+                    Thing.setCategory(t, "Anything");
+                    t.setIcon(anythingIcon);
+                }
                 double x = duffelBag.getX() + duffelBag.getWidth() / 2 - 10 * things.size();
                 double y = duffelBag.getY() + duffelBag.getHeight() / 2 - 10 * things.size();
                 t.setX(x);
                 t.setY(y);
                 t.setWidth(100);
                 t.setHeight(100);
-                t.setIcon(anythingIcon);
-                Thing.setCategory(t, "Anything");
                 things.add(t);
                 LOGGER.log(Level.INFO, "Things: {0}", things);
                 duffelBag.repaint();
@@ -1143,7 +1281,7 @@ public final class AssemblyWorkbench extends BasicGraphEditor {
             executeButton.setEnabled(false);
             mxCell root = (mxCell) graph.getModel().getRoot();
             CustomMxCell actualRoot = (CustomMxCell) root.getChildAt(0).getChildAt(0);
-            BaseBlock block = actualRoot.getBlock();
+            BaseBlock block = actualRoot.getBlock().findRoot();
             block.setState(new State());
             block.setInputs(things);
 
@@ -1160,7 +1298,7 @@ public final class AssemblyWorkbench extends BasicGraphEditor {
                     }
                 }
 
-                AnimationRunner animation = new AnimationRunner(glass, executeButton, graphComponent, actualRoot, this);
+                AnimationRunner animation = new AnimationRunner(glass, executeButton, saveButton, graphComponent, actualRoot, this);
                 animation.execute();
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(AssemblyWorkbench.class.getName()).log(Level.SEVERE, null, ex);

@@ -64,7 +64,7 @@ public class GraphEditor extends BasicGraphEditor {
      *
      */
     public GraphEditor(String appTitle, mxGraphComponent component) {
-        super(appTitle, component, null);
+        super(appTitle, component, null, null);
         final mxGraph graph = graphComponent.getGraph();
 
         // Creates the shapes palette

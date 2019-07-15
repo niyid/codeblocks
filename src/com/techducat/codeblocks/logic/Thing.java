@@ -34,6 +34,8 @@ public class Thing implements Serializable {
     private double width;
 
     private double height;
+    
+    private Object value;
 
     public int countLetters;
     
@@ -123,6 +125,14 @@ public class Thing implements Serializable {
         this.height = height;
     }
 
+    public Object getValue() {
+        return value;
+    }
+
+    public void setValue(Object value) {
+        this.value = value;
+    }
+
     @Override
     public String toString() {
         return name;
@@ -193,6 +203,11 @@ public class Thing implements Serializable {
                     c1.setId(6L);
                     c1.setName(name);
                     c1.setDescription("Days of the week - Sunday to Saturday");
+                    break;
+                case "Math":
+                    c1.setId(7L);
+                    c1.setName(name);
+                    c1.setDescription("Mathematical entity");
                     break;
             }
         }

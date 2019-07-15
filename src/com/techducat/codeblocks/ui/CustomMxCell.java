@@ -13,6 +13,7 @@ import com.techducat.codeblocks.logic.DecisionOperator;
 import com.techducat.codeblocks.logic.Looper;
 import com.techducat.codeblocks.logic.Organizer;
 import com.techducat.codeblocks.logic.Permutator;
+import com.techducat.codeblocks.logic.Progression;
 import com.techducat.codeblocks.logic.XterCounter;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -136,6 +137,19 @@ public final class CustomMxCell extends mxCell {
                         break;
                     case "com.techducat.codeblocks.logic.XterCounter":
                         baseBlock = XterCounter.createInstance(Long.valueOf(cell.getId()), cell.getValue(), new ArrayList<>(), 3);
+                        break;
+                    case "com.techducat.codeblocks.logic.Progression":
+                        baseBlock = BaseBlock.createInstance(clazz, Long.valueOf(cell.getId()), (String) cell.getValue(), new ArrayList<>(), 3);
+                        Progression p = (Progression) baseBlock;
+                        switch (templateName) {
+                            case "Sequence":
+                            default:
+                                p.setTermType(Progression.TermType.SEQUENCE);
+                                break;
+                            case "Series":
+                                p.setTermType(Progression.TermType.SERIES);
+                                break;
+                        }
                         break;
                     default:
                         baseBlock = BaseBlock.createInstance(clazz, Long.valueOf(cell.getId()), (String) cell.getValue(), new ArrayList<>(), 3);

@@ -76,6 +76,11 @@ public class BaseBlock implements Serializable, Block, Callable<Object>, Compara
         INSTANCE_MAP.put("Organizer", Organizer.class);
         INSTANCE_MAP.put("Splitter", PhraseSplitter.class);
         INSTANCE_MAP.put("Word Counter", WordCounter.class);
+        INSTANCE_MAP.put("Fibonacci", Fibonacci.class);
+        INSTANCE_MAP.put("Sequence", Progression.class);
+        INSTANCE_MAP.put("Series", Progression.class);
+        INSTANCE_MAP.put("Quadratic Equation", QuadraticEquation.class);
+        INSTANCE_MAP.put("Linear Equation", LinearEquation.class);
     }
 
     private static final Logger LOGGER = Logger.getLogger(BaseBlock.class.getName());
@@ -292,7 +297,7 @@ public class BaseBlock implements Serializable, Block, Callable<Object>, Compara
                 root = r;
             }
         }
-        LOGGER.log(Level.INFO, b.toString());
+        LOGGER.log(Level.INFO, "findRoot() => {0}", b.toString());
 
         return root != null ? root : this;
     }
@@ -471,5 +476,10 @@ public class BaseBlock implements Serializable, Block, Callable<Object>, Compara
     @Override
     public List<Object> getRetained() {
         return retained;
+    }
+
+    @Override
+    public boolean isInDisplayed() {
+        return false;
     }
 }
