@@ -7,6 +7,8 @@ package com.techducat.codeblocks.logic;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 
 /**
@@ -15,7 +17,7 @@ import javax.swing.ImageIcon;
  */
 public class Thing implements Serializable {
     
-    public static String componentName;
+    private static final Logger LOGGER = Logger.getLogger(Thing.class.getName());
 
     private Long id;
 
@@ -168,49 +170,50 @@ public class Thing implements Serializable {
         c1.setDescription("");
         c1.setId(0L);
         if(name != null) {
-            switch(name) {
-                case "Various":
+            switch(name.toLowerCase()) {
+                case "various":
                     c1.setId(1L);
                     c1.setName(name);
                     c1.setDescription("All kinds of things");
                     break;
-                case "Animal":
+                case "animal":
                     c1.setId(2L);
                     c1.setName(name);
                     c1.setDescription("Some animals");
                     break;
-                case "House":
+                case "house":
                     c1.setId(3L);
                     c1.setName(name);
                     c1.setDescription("Household items");
                     break;
-                case "Fruit":
+                case "fruit":
                     c1.setId(3L);
                     c1.setName(name);
                     c1.setDescription("Some popular fruits");
                     break;
-                case "Number":
+                case "number":
                     c1.setId(4L);
                     c1.setName(name);
                     c1.setDescription("Numbers 1 to 100");
                     break;
-                case "Anything":
+                case "anything":
                     c1.setId(5L);
                     c1.setName(name);
                     c1.setDescription("Any kind of thing");
                     break;
-                case "Week Day":
+                case "week day":
                     c1.setId(6L);
                     c1.setName(name);
                     c1.setDescription("Days of the week - Sunday to Saturday");
                     break;
-                case "Math":
+                case "math":
                     c1.setId(7L);
                     c1.setName(name);
                     c1.setDescription("Mathematical entity");
                     break;
             }
         }
+        LOGGER.log(Level.INFO, "CategorySet => {0}, {1}", new Object[]{name, thing});
         
         thing.setCategory(c1);
     }

@@ -297,7 +297,7 @@ public class BaseBlock implements Serializable, Block, Callable<Object>, Compara
                 root = r;
             }
         }
-        LOGGER.log(Level.INFO, "findRoot() => {0}", b.toString());
+        LOGGER.log(Level.INFO, "findRoot() => {0}", root);
 
         return root != null ? root : this;
     }
